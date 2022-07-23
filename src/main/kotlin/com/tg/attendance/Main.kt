@@ -3,6 +3,7 @@ package com.tg.attendance
 import com.google.inject.Guice
 import com.google.inject.Injector
 import com.tg.attendance.dto.AttendanceDto
+import com.tg.attendance.dto.AttendanceSummaryOutput
 import com.tg.attendance.dto.BanyuanDto
 import com.tg.attendance.exception.BanyuanNotFoundException
 import com.tg.attendance.module.AttendanceModule
@@ -20,11 +21,13 @@ import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
 import org.http4k.filter.DebuggingFilters.PrintRequestAndResponse
 import org.http4k.format.Jackson.auto
+import org.http4k.format.Jackson.json
 import org.http4k.lens.string
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.http4k.server.*
+import java.sql.ResultSet
 
 /**
  * To generate Jooq, under codegen folder
@@ -37,21 +40,23 @@ val injector: Injector = Guice.createInjector(AttendanceModule(), BanyuanModule(
 var attendanceService: AttendancePersistanceService = injector.getInstance(AttendancePersistanceService::class.java)
 var banyuanPersistanceService: BanyuanPersistanceService = injector.getInstance(BanyuanPersistanceService::class.java)
 
-val attendanceLens = Body.auto<String>().toLens()
+val markAttendanceLens = Body.auto<String>().toLens()
 val updateBanyuanQrCodeLens = Body.auto<String>().toLens()
 val updateBanyuanLens = Body.auto<BanyuanDto>().toLens()
+val attendanceLens = Body.auto<List<AttendanceSummaryOutput>>().toLens()
 
 val app: HttpHandler = routes(
     "/ping" bind GET to {
         Response(OK).body("pong")
     },
     "/mark/{bentang}/{id}" bind GET to {
-            req: Request -> attendanceLens.inject(mark(req.path("id").toString(), req.path("bentang").toString()), Response(Status.OK))
+            req: Request -> markAttendanceLens.inject(mark(req.path("id").toString(), req.path("bentang").toString()), Response(Status.OK))
     },
     "/banyuan/qrcode/{oldCode}/{newCode}" bind Method.PATCH to {
         req: Request -> updateBanyuanQrCodeLens.inject(updateQRCode(req.path("oldCode").toString(), req.path("newCode").toString()), Response(Status.OK))
     },
-    "/banyuan" bind Method.PATCH to updateBanyuan()
+    "/banyuan" bind Method.PATCH to updateBanyuan(),
+    "/attendanceSummary/{bentang}" bind GET to allAttendance()
 )
 
 class SecureJetty(
@@ -93,6 +98,7 @@ class SecureJetty(
 }
 
 fun main() {
+    System.setProperty("org.jooq.no-logo", "true")
     PrintRequestAndResponse().then (app)
         .asServer(SunHttp(4011)).start()
 //        .asServer(
@@ -104,7 +110,6 @@ fun main() {
 }
 
 fun mark(id: String, bentang: String): String {
-
     try {
         return attendanceService.mark(AttendanceDto(id, bentang))
     } catch (exception: BanyuanNotFoundException) {
@@ -124,4 +129,13 @@ fun updateBanyuan(): HttpHandler = {
     val newItem = updateBanyuanLens.extract(it)
     val result = banyuanPersistanceService.updateBanyuan(newItem)
     Response(OK).with(Body.string(TEXT_PLAIN).toLens() of result)
+}
+
+fun allAttendance(): HttpHandler = {
+    try {
+         Response(OK).with(
+                attendanceLens of attendanceService.attendanceSummary(it.path("bentang")))
+    } catch (exception: BanyuanNotFoundException) {
+        Response(NOT_FOUND)
+    }
 }

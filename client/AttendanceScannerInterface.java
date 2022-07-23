@@ -1,4 +1,3 @@
-
 import javax.net.ssl.*;
 import javax.swing.*;
 import java.awt.*;
@@ -20,6 +19,7 @@ import java.util.Scanner;
 
 public class AttendanceScannerInterface {
 
+    private static final String BENTANG = "tg";
     static Color greenColor = new Color(65,129,49);
 
     static Color redColor = new Color(255,0,0);
@@ -104,7 +104,7 @@ public class AttendanceScannerInterface {
     private static void callAPI(String qrcode, JLabel outputLbl, JTextField inputText) throws IOException, URISyntaxException, NoSuchAlgorithmException, KeyManagementException {
         System.out.println("QRCode: "+ qrcode);
         long currentTs = System.currentTimeMillis();
-        String link = "http://xfb.tgone.org:4011/mark/th/"+qrcode;
+        String link = "http://xfb.tgone.org:4011/mark/" + BENTANG + "/" +qrcode;
 
         HttpClient client = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
@@ -122,7 +122,7 @@ public class AttendanceScannerInterface {
                 .thenApply(HttpResponse::body)
                 .thenAccept(resp -> {
                     String outputString = resp.replaceAll("\\<.*?\\>", "");
-                    if (outputString.endsWith("成功！")) {
+                    if (outputString.indexOf("签到成功！") != -1) {
                         outputLbl.setForeground(greenColor);
                     } else {
                         outputLbl.setForeground(redColor);
@@ -134,31 +134,5 @@ public class AttendanceScannerInterface {
                     System.out.println();
                 })
                 .join();
-    }
-
-    private void consoleMain() throws IOException {
-        Scanner scanner = new Scanner(System.in);
-        while(true) {
-            String qrcode = scanner.next();
-            String link = "https://tgone.org/zdq/fxAXwn3DC5Y59J6Rs563?"+qrcode;
-            URL url = new URL(link);
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
-            con.connect();
-
-            int status = con.getResponseCode();
-            if (status == 200) {
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(con.getInputStream()));
-                String inputLine;
-                StringBuffer content = new StringBuffer();
-                while ((inputLine = in.readLine()) != null) {
-                    content.append(inputLine);
-                }
-                System.out.println(content);
-                in.close();
-            }
-            con.disconnect();
-        }
     }
 }

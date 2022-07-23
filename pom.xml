@@ -60,6 +60,12 @@
             <artifactId>guice</artifactId>
             <version>5.1.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.0.1</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.jooq/jooq -->
         <!-- Note: These aren't hosted on Maven Central. Import them manually from your distribution -->
         <dependency>
