@@ -23,8 +23,8 @@ public class BanyuanPersistanceServiceImpl implements BanyuanPersistanceService 
         this.dsl = dsl;
     }
     @Override
-    public boolean checkIfBanyuanExist(String name) throws Exception {
-        int count = dsl.getContext().fetchCount(DSL.selectFrom(banyuanDef));
+    public boolean checkIfBanyuanExist(String qrcode) throws Exception {
+        int count = dsl.getContext().fetchCount(DSL.selectFrom(banyuanDef).where(banyuanDef.QRCODE.eq(qrcode)));
         return count > 0;
     }
     @Override
@@ -36,6 +36,30 @@ public class BanyuanPersistanceServiceImpl implements BanyuanPersistanceService 
             return null;
         }
     }
+
+    @Override
+    public String updateBanyuanQRCode(String oldQrcode, String newQrcode) throws Exception {
+        AtomicInteger result = new AtomicInteger(0);
+        dsl.getContext().transaction((Configuration trx) -> {
+            //update attendance QRcode
+            trx.dsl().update(attendanceDef)
+                    .set(attendanceDef.QRCODE, newQrcode)
+                    .where(attendanceDef.QRCODE.eq(oldQrcode)
+                    ).execute();
+
+            result.set(trx.dsl()
+                    .update(banyuanDef)
+                    .set(banyuanDef.QRCODE, newQrcode)
+                    .where(banyuanDef.QRCODE.eq(oldQrcode)).execute());
+        });
+        if (result.get() == 1) {
+            return "更改成功！";
+        } else {
+            return "更改失败！";
+        }
+    }
+
+
     @Override
     public String updateBanyuan(BanyuanDto banyuanDto) throws Exception {
         AtomicInteger result = new AtomicInteger(0);
@@ -52,7 +76,6 @@ public class BanyuanPersistanceServiceImpl implements BanyuanPersistanceService 
             result.set(trx.dsl()
                     .update(banyuanDef)
                     .set(banyuanDef.QRCODE, banyuanDto.getQrcode())
-                    .set(banyuanDef.NAME, banyuanDto.getName())
                     .set(banyuanDef.GENDER, banyuanDto.getGender())
                     .set(banyuanDef.DESHU, banyuanDto.getDeshu())
                     .set(banyuanDef.FOTANG, banyuanDto.getFotang())
