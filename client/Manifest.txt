@@ -1,2 +1,2 @@
-Main-Class: AttendanceScannerInterface
+Main-Class: THAttendanceScannerInterface
 

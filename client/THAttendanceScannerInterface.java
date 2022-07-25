@@ -17,9 +17,9 @@ import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.Scanner;
 
-public class AttendanceScannerInterface {
+public class THAttendanceScannerInterface {
 
-    private static final String BENTANG = "tg";
+    private static final String BENTANG = "th";
     static Color greenColor = new Color(65,129,49);
 
     static Color redColor = new Color(255,0,0);
@@ -61,7 +61,7 @@ public class AttendanceScannerInterface {
         mainFrame.setTitle("签到系统");
 
 
-        JLabel mainTitleLbl = new JLabel("第二十一期模范班（进修班）");
+        JLabel mainTitleLbl = new JLabel("第二十一期模范班(进修班)-天慧");
 
         Font mainLabelFont = mainTitleLbl.getFont();
 

@@ -19,15 +19,14 @@ import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.NOT_FOUND
 import org.http4k.core.Status.Companion.OK
+import org.http4k.filter.*
 import org.http4k.filter.DebuggingFilters.PrintRequestAndResponse
 import org.http4k.format.Jackson.auto
-import org.http4k.format.Jackson.json
 import org.http4k.lens.string
 import org.http4k.routing.bind
 import org.http4k.routing.path
 import org.http4k.routing.routes
 import org.http4k.server.*
-import java.sql.ResultSet
 
 /**
  * To generate Jooq, under codegen folder
@@ -99,8 +98,19 @@ class SecureJetty(
 
 fun main() {
     System.setProperty("org.jooq.no-logo", "true")
-    PrintRequestAndResponse().then (app)
-        .asServer(SunHttp(4011)).start()
+
+    var serverFilter =
+        ServerFilters.Cors(
+        CorsPolicy(
+        OriginPolicy.AllowAll(),
+            listOf("Content-Type"),
+            listOf(GET, Method.POST, Method.PATCH, Method.DELETE
+    ))
+    ).then (app)
+    val compositeFilter = PrintRequestAndResponse().then(serverFilter)
+
+   // PrintRequestAndResponse().then (app)
+    compositeFilter.asServer(SunHttp(4011)).start()
 //        .asServer(
 //            SecureJetty(
 //                4011, "keystore.jks",
