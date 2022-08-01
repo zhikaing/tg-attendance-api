@@ -9,5 +9,6 @@ import java.util.List;
 
 public interface AttendancePersistanceService {
     String mark(AttendanceDto attendanceDto) throws Exception;
+    String takeLeave(AttendanceDto attendanceDto) throws Exception;
     List<AttendanceSummaryOutput> attendanceSummary(String bentang) throws SQLException;
 }
